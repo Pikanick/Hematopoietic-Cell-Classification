@@ -10,8 +10,16 @@ from PIL import Image
 import math
 import random
 
-TRAIN_PATH_ABS = os.path.abspath("../train_filenames.txt")
-DATASET_PATH_ABS = os.path.abspath("../BMC-Dataset")
+# These used to be os.path.abspath("../...") which resolves relative to
+# the process's *current working directory*, not this file's location --
+# so importing this module (from Model_Train.py / Model_Test.py, both run
+# from the repo root) resolved "../train_filenames.txt" and
+# "../BMC-Dataset" to one level *above* the repo, not the repo root. Anchor
+# on this file's own location instead so it works regardless of where the
+# caller's process was started from.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TRAIN_PATH_ABS = os.path.join(_REPO_ROOT, "train_filenames.txt")
+DATASET_PATH_ABS = os.path.join(_REPO_ROOT, "BMC-Dataset")
 # Dataset label mappings for one-hot encoding
 LABEL_DICT = {
     'BLA': 0,
@@ -63,13 +71,16 @@ class DataGenerator(keras.utils.Sequence):
 # testing of Data Generator class
 if __name__ == "__main__":
     # open training filenames
-    with open('train_filenames.txt') as train_fd:
+    with open(TRAIN_PATH_ABS) as train_fd:
         train_filenames = [f_name.strip('\n') for f_name in train_fd.readlines()]
         random.shuffle(train_filenames)
     # associated labels mapped to integer values
     train_labels = [LABEL_DICT[f_name.split('/')[0]] for f_name in train_filenames]
 
-    data_gen = DataGenerator(train_filenames, train_labels, batch_size= 32)
+    # DataGenerator.__init__ requires num_classes -- this used to omit it
+    # and crash with "missing 1 required positional argument: 'num_classes'"
+    # the moment this file was run directly.
+    data_gen = DataGenerator(train_filenames, train_labels, batch_size=32, num_classes=len(LABEL_DICT))
     batch_x, batch_y = data_gen[0]
     # numpy array of three 250 x 250 channels
     print(batch_x[0])
