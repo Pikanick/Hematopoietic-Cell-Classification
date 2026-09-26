@@ -10,8 +10,11 @@ from tensorflow.keras.metrics import CategoricalAccuracy, CategoricalCrossentrop
 
 from Utility_Functions import data_helper as DataUtil
 import random
+import os
 
 OUTPUT_CLASSES = 4
+# divide conv widths (1 = paper's MV3; 2 = half-width, ~4x faster)
+W = int(os.environ.get('MV3_WIDTH_DIV', 1))
 
 # High Level Parameters
 batch_size = 32
@@ -34,38 +37,38 @@ test_datagen = DataUtil.DataGenerator(test_fnames, test_labels, batch_size, OUTP
 # Start of model definition
 model = Sequential()
 
-model.add(Conv2D(256, (3, 3), input_shape=(128, 128, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
+model.add(Conv2D(256 // W, (3, 3), input_shape=(128, 128, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
 # L1
 model.add(GaussianNoise(1))
-model.add(Conv2D(256, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
+model.add(Conv2D(256 // W, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 # L2 Conv
-model.add(Conv2D(256, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
+model.add(Conv2D(256 // W, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2), strides=2))
 # L3 Conv
 model.add(GaussianNoise(1))
-model.add(Conv2D(128, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
+model.add(Conv2D(128 // W, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 # L4 Conv
-model.add(Conv2D(128, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
+model.add(Conv2D(128 // W, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 # L5 Conv
-model.add(Conv2D(128, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
+model.add(Conv2D(128 // W, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2), strides=2))
 # L6 Conv
 model.add(GaussianNoise(1))
-model.add(Conv2D(64, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
+model.add(Conv2D(64 // W, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 # L7 Conv
-model.add(Conv2D(64, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
+model.add(Conv2D(64 // W, (3, 3), kernel_initializer= initializer, kernel_regularizer='l2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2), strides=2))
@@ -107,6 +110,6 @@ model.compile(loss='categorical_crossentropy',
                   Precision(thresholds=0.50, class_id=3, name='ngs-precision')
 ])
 
-model.load_weights('./Weights/MV3_Weights.hdf5')
+model.load_weights('./Weights/MV3_Weights.weights.h5')
 model.save('./Models/Final-Model.hdf5')
 model.evaluate(test_datagen)
