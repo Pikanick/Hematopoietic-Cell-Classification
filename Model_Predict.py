@@ -10,7 +10,13 @@ LABEL_LIST = ['BLA', 'LYT', 'NGB', 'NGS']
 # Please set the IMG PATH
 IMG_PATH = "./Sample_Images/BLA_06642.jpg"
 
-model = keras.models.load_model('./Models/Final-Model.hdf5')
+MODEL_PATH = './Models/Final-Model.hdf5'
+with open(MODEL_PATH, 'rb') as fd:
+    if fd.read(7) == b'version':
+        raise SystemExit(f'{MODEL_PATH} is a Git LFS pointer, not real weights. '
+                         'Run Model_Train.py (or Train_Colab.ipynb) to generate them.')
+
+model = keras.models.load_model(MODEL_PATH)
 
 # Load the image
 img_in = keras.utils.load_img(IMG_PATH, target_size=(128, 128))
